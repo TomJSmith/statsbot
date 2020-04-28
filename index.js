@@ -40,6 +40,12 @@ function handleOctaveMsg(msg) {
   }
 }
 
+function handleBofaMsg(msg) {
+  if (msg.content.toLowerCase() == 'bofa') {
+    msg.reply('BOFA DEEZ NUTZ');
+  }
+}
+
 client.on('ready', () => {
   console.log('client ready');
 });
@@ -62,7 +68,12 @@ client.on('message', msg => {
     }
     catch {}
   }
-
+  if (octaveRegex.test(msg.cleanContent)) {
+    try {
+      handleBofaMsg(msg);
+    }
+    catch {}
+  }
 });
 
 
