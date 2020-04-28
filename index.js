@@ -3,6 +3,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const rollRegex = /(^|\s+)[0-9]*(d|D)[0-9]+($|\s+)/g;
 const octaveRegex = /^_/g;
+const bofaRegex = \bBOFA\b/gi;
 
 // inclusize min, exclusive max
 function getRandomInt(min, max) {
@@ -41,9 +42,7 @@ function handleOctaveMsg(msg) {
 }
 
 function handleBofaMsg(msg) {
-  if (msg.content.toLowerCase() == 'bofa') {
-    msg.reply('BOFA DEEZ NUTZ');
-  }
+  msg.reply('BOFA DEEZ NUTZ');
 }
 
 client.on('ready', () => {
@@ -68,7 +67,7 @@ client.on('message', msg => {
     }
     catch {}
   }
-  if (octaveRegex.test(msg.cleanContent)) {
+  if (bofaRegex.test(msg.cleanContent)) {
     try {
       handleBofaMsg(msg);
     }
