@@ -5,14 +5,15 @@
 		"es6": true
 	},
 	"parserOptions": {
-		"ecmaVersion": 2019
+    "ecmaVersion": 2019,
+    "sourceType": "module"
 	},
 	"rules": {
 		"brace-style": ["error", "stroustrup", { "allowSingleLine": true }],
 		"comma-dangle": ["error", "always-multiline"],
 		"comma-spacing": "error",
 		"comma-style": "error",
-		"curly": ["error", "multi-line", "consistent"],
+		"curly": ["error", "multi"],
 		"dot-location": ["error", "property"],
 		"handle-callback-err": "off",
 		"indent": ["error", 2],
