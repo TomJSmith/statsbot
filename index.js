@@ -1,10 +1,10 @@
 require('dotenv').config();
-import * as dice from 'dice.js';
-import * as octave from 'octave.js';
-import * as bofa from 'bofa.js';
+const dice = require('./dice.js');
+const discord = require('discord.js');
+const octave = require('./octave.js');
+const bofa = require('./bofa.js');
 
-const Discord = require('discord.js');
-const client = new Discord.Client();
+const client = new discord.Client();
 
 client.on('ready', () => {
   console.log('client ready');

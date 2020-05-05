@@ -1,8 +1,8 @@
-const test = function() {
+exports.test = (msg) => {
   console.log('testing');
 };
 
-const handle = function(msg) {
-  console.log('handle')
+exports.test = (msg) => {
+  console.log('handle');
 };
 

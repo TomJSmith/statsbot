@@ -1,12 +1,11 @@
-export { test, handle };
 const Discord = require('discord.js');
 const diceRoll = /\b[0-9]*(d|D)[0-9]+\b/gi;
 
-function test(msg) {
+exports.test = (msg) => {
   return diceRoll.test(msg.cleanContent);
-}
+};
 
-function handle(msg) {
+exports.handle = (msg) => {
   try {
     const rolls = {};
     let dice;
@@ -30,7 +29,7 @@ function handle(msg) {
     msg.reply(reply);
   }
   catch {}
-}
+};
 
 function getRandomInt(min, max) {
   min = Math.ceil(min);

@@ -1,14 +1,12 @@
-export { test, handle };
-
 const bofaRegex = /\bBOFA\b/gi;
 
-function test(msg) {
+exports.test = (msg) => {
   return bofaRegex.test(msg.cleanContent);
-}
+};
 
-function handle(msg) {
+exports.handle = (msg) => {
   try {
     msg.reply('BOFA DEEZ NUTZ');
   }
   catch {}
-}
+};
