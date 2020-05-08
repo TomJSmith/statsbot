@@ -1,4 +1,5 @@
-const Discord = require('discord.js');
+const discord = require('discord.js');
+
 const diceRoll = /\b[0-9]*(d|D)[0-9]+\b/gi;
 
 exports.test = (msg) => {
@@ -22,7 +23,7 @@ exports.handle = (msg) => {
     }
 
     const total = Object.values(rolls).flat().reduce((acc, curr) => acc + curr);
-    const reply = new Discord.MessageEmbed();
+    const reply = new discord.MessageEmbed();
     reply.setTitle(`${total}`);
     reply.setColor('0xff0000');
     Object.entries(rolls).forEach(kvp => reply.addField(`${kvp[1].length} d${kvp[0]} (${kvp[1].reduce((a, c) => a + c)})`, `${kvp[1].join(', ')}`));
