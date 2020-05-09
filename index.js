@@ -4,7 +4,7 @@ const modules = [
   require('./dice.js'),
   require('./octave.js'),
   require('./bofa.js'),
-  require('./blackjack.js')
+  require('./blackjack.js'),
 ];
 
 const client = new discord.Client();
@@ -13,7 +13,7 @@ client.on('ready', () => {
   console.log('client ready');
 });
 
-for (const listener of module.map(m => m.listeners).flat())
+for (const listener of modules.map(m => m.listeners).flat())
   client.on(listener.event, listener.handler);
 
 client.login(process.env.BOT_TOKEN);

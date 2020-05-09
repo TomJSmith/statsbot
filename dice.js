@@ -1,5 +1,5 @@
 module.exports.listeners = [
-  { event: 'message', handler: handle }
+  { event: 'message', handler: handle },
 ];
 
 const discord = require('discord.js');
