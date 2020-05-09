@@ -1,5 +1,8 @@
-const discord = require('discord.js');
+module.exports.listeners = [
+  { event: 'message', handler: messageHandler },
+];
 
+const discord = require('discord.js');
 const startText = '-blackjack';
 let game = null;
 
@@ -34,7 +37,3 @@ function deck() {
 
   return suits.map(s => values.map(v => ({ suit: s, value: v }))).flat();
 }
-
-module.exports.listeners = [
-  { event: 'message', handler: messageHandler },
-];

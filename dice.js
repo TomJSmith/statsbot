@@ -1,13 +1,15 @@
-const discord = require('discord.js');
+module.exports.listeners = [
+  { event: 'message', handler: handle }
+];
 
+const discord = require('discord.js');
 const diceRoll = /\b[0-9]*(d|D)[0-9]+\b/gi;
 
-exports.test = (msg) => {
-  return diceRoll.test(msg.cleanContent);
-};
-
-exports.handle = (msg) => {
+function handle(msg) {
   try {
+    if (msg.author.bot || !diceRoll.test(msg.cleanContent))
+      return;
+
     const rolls = {};
     let dice;
     diceRoll.lastIndex = 0;
@@ -29,8 +31,10 @@ exports.handle = (msg) => {
     Object.entries(rolls).forEach(kvp => reply.addField(`${kvp[1].length} d${kvp[0]} (${kvp[1].reduce((a, c) => a + c)})`, `${kvp[1].join(', ')}`));
     msg.reply(reply);
   }
-  catch {}
-};
+  catch(e) {
+    console.log(e);
+  }
+}
 
 function getRandomInt(min, max) {
   min = Math.ceil(min);
