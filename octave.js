@@ -1,12 +1,12 @@
 module.exports.listeners = [
-  { event: 'message', handler: handle }
+  { event: 'message', handler: handle },
 ];
 
 const octave = /^_/g;
 
 function handle(msg) {
   try {
-    if (msg.author.bot || !octave.lastIndex(msg.cleanContent))
+    if (msg.author.bot || !octave.test(msg.cleanContent))
       return;
 
     if (msg.channel.name != 'skynet')

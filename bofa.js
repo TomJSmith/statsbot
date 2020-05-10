@@ -6,7 +6,7 @@ const bofaRegex = /\bBOFA\b/gi;
 
 function handle(msg) {
   try {
-    if (this.msg.bot || !bofaRegex.test(msg.cleanContent))
+    if (msg.author.bot || !bofaRegex.test(msg.cleanContent))
       return;
 
     msg.reply('BOFA DEEZ NUTZ');
