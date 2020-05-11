@@ -9,6 +9,9 @@ const startText = '-blackjack';
 const hit = /^hit$/gi;
 const stand = /^stand$/gi;
 
+// TODO
+// use map to track multiple games at once
+// each channel can have 1 active game
 const game = {
   activePlayer: null,
   channel: null,
@@ -34,14 +37,15 @@ async function messageHandler(msg) {
       msg.reply('Place your bets');
       game.state = 'betting';
 
-      setTimeout(() => {
+      setTimeout(async () => {
         deal();
         // TODO
         // show players cards and bets
         game.state = 'playing';
         game.activePlayer = 0;
-        askHitOrStand(game.players[game.activePlayer]);
-      }, 5000);
+        await game.channel.send(toString(game.players[game.activePlayer]));
+        await game.channel.send('Hit or Stand?');
+      }, 1000);
       break;
 
     case 'betting':
@@ -49,24 +53,23 @@ async function messageHandler(msg) {
       break;
 
     case 'playing':
-      if (msg.author !== game.players[game.activePlayer])
+      if (msg.author !== game.players[game.activePlayer].user)
         return;
 
       if (hit.test(msg.content))
         game.players[game.activePlayer].cards.push(game.deck.pop());
 
-      game.channel.send(game.players[game.activePlayer].cards);
-
-      if (busted(game.players[game.activeplayer].cards) || stand.test(msg.content)) {
+      if (isBust(game.players[game.activePlayer].cards) || stand.test(msg.content)) {
         game.activePlayer++;
         if (game.activePlayer >= game.players.length) {
           hitDealer();
-          finish();
+          await finish();
           break;
         }
       }
 
-      askHitOrStand(game.players[game.activePlayer]);
+      await game.channel.send(toString(game.players[game.activePlayer]));
+      await game.channel.send('Hit or Stand?');
       break;
     }
   }
@@ -77,12 +80,14 @@ async function messageHandler(msg) {
 
 async function getPlayers(channel) {
   const embed = new discord.MessageEmbed();
+  // TODO reduce method calls
   embed.setTitle('A game of Blackjack is starting in 20 seconds!');
   embed.setColor('LUMINOUS_VIVID_PINK');
   embed.setDescription('Click the die to join.');
 
   const startingMsg = await channel.send({ embed });
   await startingMsg.react('🎲');
+
   const reactions = await startingMsg.awaitReactions((r) => r.emoji.name === '🎲', { time: 5000 });
   return (await reactions.first().users.fetch()).filter(u => !u.bot);
 }
@@ -94,27 +99,29 @@ function deal() {
     p.cards.push(game.deck.pop());
 }
 
-function busted(hand) {
+function isBust(hand) {
   let sum = 0;
-  for (const card in hand)
-    sum += Math.max(card.value, 10);
+  for (const card of hand)
+    sum += Math.min(card.value, 10);
 
   return sum > 21;
 }
 
-function hitDealer() {
+async function hitDealer() {
   // use blackjack rules to decide if dealer hits
   // send message for what dealer does
 }
 
-function finish() {
-  game.channel.send('game finished');
+async function finish() {
+  await game.channel.send('Game finished!\nFinal Hands:');
+  for (const p of game.players)
+    await game.channel.send(toString(p));
   // determine winners
   // calculate payouts
   // display results
   // set game state pending
 }
 
-function askHitOrStand(player) {
-  game.channel.send(`${player.user.username} ${player.cards} hit or stand?`);
+function toString(player) {
+  return `${player.user.username}\n ${player.cards.map(cards.toString).join(', ')}`;
 }
