@@ -1,11 +1,11 @@
-module.exports = { deck, shuffle, shuffledDeck, toString };
+module.exports = { deck, shuffle, shuffledDeck, toString, toEmoji };
 
-const suits = ['♦️', '♠️', '♣️', '♥️'];
+const suits = ['diamonds', 'spades', 'clubs', 'hearts'];
 const values = [13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-const textValues = new Map([
-  [13, 'king'],
-  [12, 'queen'],
-  [11, 'jack'],
+const cardValues = new Map([
+  [13, 'K'],
+  [12, 'Q'],
+  [11, 'J'],
   [10, '10'],
   [9, '9'],
   [8, '8'],
@@ -15,16 +15,21 @@ const textValues = new Map([
   [4, '4'],
   [3, '3'],
   [2, '2'],
-  [1, 'ace'],
+  [1, 'A'],
 ]);
-
+const cardSuits = new Map([
+  ['clubs', '♣️'],
+  ['diamonds', '♦️'],
+  ['hearts', '♥️'],
+  ['spades', '♠️'],
+]);
 
 function deck() {
   return suits.map(s => values.map(v => ({ suit: s, value: v }))).flat();
 }
 
-function shuffle(d) {
-  let currentIndex = d.length,
+function shuffle(aDeck) {
+  let currentIndex = aDeck.length,
     temporaryValue,
     randomIndex;
 
@@ -36,18 +41,22 @@ function shuffle(d) {
     currentIndex -= 1;
 
     // And swap it with the current element.
-    temporaryValue = d[currentIndex];
-    d[currentIndex] = d[randomIndex];
-    d[randomIndex] = temporaryValue;
+    temporaryValue = aDeck[currentIndex];
+    aDeck[currentIndex] = aDeck[randomIndex];
+    aDeck[randomIndex] = temporaryValue;
   }
 
-  return d;
+  return aDeck;
 }
 
 function shuffledDeck() {
   return shuffle(deck());
 }
 
+function toEmoji(card) {
+  return `${cardValues.get(card.value)}${cardSuits.get(card.suit)}`;
+}
+
 function toString(card) {
-  return `${textValues.get(card.value)}${card.suit}`;
+  return `${card.value} of ${card.suit}`;
 }
