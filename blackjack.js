@@ -5,9 +5,10 @@ module.exports.listeners = [
 const discord = require('discord.js');
 const cards = require('./util/cards.js');
 
-const startText = '-blackjack';
-const hit = /^hit$/gi;
-const stand = /^stand$/gi;
+const start = /^-blackjack$/i;
+const hit = /^hit$/i;
+const stand = /^stand$/i;
+const bet = /^[0-9]+$/i;
 
 // TODO
 // use map to track multiple games at once
@@ -18,7 +19,7 @@ async function messageHandler(msg) {
   try {
     switch (currGame.state) {
     case 'pending':
-      if (startText !== msg.cleanContent)
+      if (!start.test(msg.content))
         break;
 
       currGame.channel = msg.channel;
@@ -27,7 +28,7 @@ async function messageHandler(msg) {
       // TODO
       // look up channel nickname for player name
       for (const player of await getPlayers(msg.channel))
-        currGame.players.push({ user: player, name: player.username, cards: [], bet: 0, cash: 300 });
+        currGame.players.push({ user: player, name: player.username, cash: 300 });
 
       if (currGame.players.length === 0) {
         await currGame.channel.send({ embed: embedMessage([], 'Game cannot start without players!', 'Make sure to click the die to join the game') });
@@ -35,39 +36,46 @@ async function messageHandler(msg) {
       }
 
       await currGame.channel.send({ embed: embedMessage([], 'Game Start!') });
-      await currGame.channel.send({ embed: embedMessage([currGame.dealer].concat(currGame.players), 'Place your bets', '', 'Send 1234 to place a bet.') });
+      await currGame.channel.send({ embed: embedMessage([currGame.dealer, ...currGame.players], 'Place your bets', '', 'Send 1234 to place a bet.') });
 
       currGame.state = 'betting';
 
       setTimeout(async () => {
         for (const p of currGame.players) {
-          p.cards.push(currGame.deck.pop());
-          p.cards.push(currGame.deck.pop());
+          p.cash -= p.bet || 0;
+          p.cards = [currGame.deck.pop(), currGame.deck.pop()];
         }
-        currGame.dealer.cards.push(currGame.deck.pop());
-        currGame.dealer.cards.push(currGame.deck.pop());
 
-        currGame.state = 'playing';
+        currGame.dealer.cards = [currGame.deck.pop(), currGame.deck.pop()];
+
+        currGame.state = 'hitting';
         currGame.activePlayer = 0;
-        await currGame.channel.send({ embed: embedMessage([currGame.dealer].concat(currGame.players), 'Betting has finished.') });
-        await currGame.channel.send({ embed: embedMessage([currGame.players[currGame.activePlayer]], `${currGame.players[currGame.activePlayer].name}, Hit or Stand?`) });
+        await currGame.channel.send({ embed: embedMessage([currGame.dealer, ...currGame.players], 'Betting concluded. Cards dealt.') });
+        await currGame.channel.send({ embed: embedMessage([currGame.dealer, currGame.players[currGame.activePlayer]], `${currGame.players[currGame.activePlayer].name}, Hit or Stand?`) });
       }, 10000);
       break;
 
     case 'betting':
-      // TODO
-      // update player's bets and notify that bets have been received
+      if (!bet.test(msg.content))
+        break;
+
+      // eslint-disable-next-line no-case-declarations
+      const better = currGame.players.find(p => p.user === msg.author);
+      if (!better)
+        break;
+
+      better.bet = Math.min(parseInt(msg.content), better.cash);
       break;
 
-    case 'playing':
-      if (msg.author !== currGame.players[currGame.activePlayer].user)
+    case 'hitting':
+      if (currGame.activePlayer >= currGame.players.length || msg.author !== currGame.players[currGame.activePlayer].user)
         return;
 
       if (hit.test(msg.content)) {
         currGame.players[currGame.activePlayer].cards.push(currGame.deck.pop());
 
         if (!isValid(currGame.players[currGame.activePlayer].cards)) {
-          currGame.channel.send({ embed: embedMessage([currGame.players[currGame.activePlayer]], `${currGame.players[currGame.activePlayer].name}, bust!`, 'Better luck next time.') });
+          await currGame.channel.send({ embed: embedMessage([currGame.players[currGame.activePlayer]], `${currGame.players[currGame.activePlayer].name}, bust!`, 'Better luck next time.') });
           currGame.activePlayer++;
         }
       }
@@ -76,12 +84,13 @@ async function messageHandler(msg) {
         currGame.activePlayer++;
 
       if (currGame.activePlayer >= currGame.players.length) {
-        hitDealer();
+        while (dealerShouldHit(currGame))
+          currGame.dealer.cards.push(currGame.deck.pop());
         await finish(currGame);
         break;
       }
 
-      await currGame.channel.send({ embed: embedMessage([currGame.players[currGame.activePlayer], currGame.dealer], `${currGame.players[currGame.activePlayer].name}, hit or stand?`) });
+      await currGame.channel.send({ embed: embedMessage([currGame.dealer, currGame.players[currGame.activePlayer]], `${currGame.players[currGame.activePlayer].name}, hit or stand?`) });
       break;
     }
   }
@@ -109,33 +118,35 @@ function isValid(hand) {
   return sum < 22;
 }
 
-async function hitDealer() {
-  // use blackjack rules to decide if dealer hits
-  // send message for what dealer does
-  // dealer hits if bellow 17, stands if 17 or more
-  // aces are counted at 11 for dealer
+// Dealer should hit if hand total is bellow 17 (aces are counted high)
+function dealerShouldHit(aGame) {
+  let handTotal = 0;
+  for (const c of aGame.dealer.cards)
+    handTotal += c.value === 1 ? 11 : Math.min(c.value, 10);
+
+  return handTotal < 17;
 }
 
 async function finish(aGame) {
-  await currGame.channel.send({ embed: embedMessage([currGame.dealer].concat(currGame.players), 'Game finished!') });
+  await currGame.channel.send({ embed: embedMessage([aGame.dealer, ...aGame.players], 'Game finished!', '', false) });
+  currGame = game();
   // determine winners
   // calculate payouts
   // display results
   // set game state pending
 }
 
-function embedMessage(players, title, description, footer) {
-  const msg = new discord.MessageEmbed({ title: title || '', description: description || '', footer: { text: footer || '' }, color: 'LUMINOUS_VIVID_PINK' });
+function embedMessage(players = [], title = '', description = '', footer = '', hideDealer = true) {
+  const msg = new discord.MessageEmbed({ title, description, footer: { text: footer }, color: 'LUMINOUS_VIVID_PINK' });
 
-  for (const p of players)
-    msg.addField(
-      p.name,
-      // TODO
-      // don't show the dealers cards when the game is being played
-      `${p.cards ? 'Hand:' + p.cards.length ? p.cards.map(cards.toEmoji).join('|') : 'empty' : 'no hand'}
-      ${p.bet ? 'Bet:$' + p.bet : 'no bet'}
-      ${p.cash ? 'Cash:$' + p.cash : 'no cash'}`,
-      true);
+  for (const p of players) {
+    const values = [
+      p.cards !== undefined ? (p.dealer && hideDealer ? [cards.toEmoji(p.cards[0]), ...p.cards.slice(1).map(() => '❓')] : p.cards.map(cards.toEmoji)).join('|') : null,
+      p.bet !== undefined ? 'Bet: $' + p.bet : null,
+      p.cash !== undefined ? 'Cash: $' + p.cash : null,
+    ].filter(Boolean);
+    msg.addField(p.name, values.length ? values.join('\n') : '\u200b', true);
+  }
 
   return msg;
 }
@@ -144,7 +155,7 @@ function game() {
   return {
     activePlayer: null,
     channel: null,
-    dealer: { name: 'Dealer', cards: [] },
+    dealer: { name: 'Dealer', dealer: true },
     deck: cards.shuffledDeck(),
     players: [],
     state: 'pending',
