@@ -7,7 +7,7 @@ const cards = require('./util/cards.js');
 
 const start = /^-blackjack$/i;
 const hit = /^hit$/i;
-const stand = /^stand$/i;
+const stay = /^stay$/i;
 const bet = /^[0-9]+$/i;
 const games = new Map();
 
@@ -55,7 +55,7 @@ async function messageHandler(msg) {
         currGame.state = 'hitting';
         currGame.activePlayer = 0;
         await currGame.channel.send({ embed: embedMessage([currGame.dealer, ...currGame.players], 'Betting concluded. Cards dealt.') });
-        await currGame.channel.send({ embed: embedMessage([currGame.dealer, currGame.players[currGame.activePlayer]], `${currGame.players[currGame.activePlayer].name}, Hit or Stand?`) });
+        await currGame.channel.send({ embed: embedMessage([currGame.dealer, currGame.players[currGame.activePlayer]], `${currGame.players[currGame.activePlayer].name}, Hit or Stay?`) });
       }, 15000);
       break;
 
@@ -84,7 +84,7 @@ async function messageHandler(msg) {
         }
       }
 
-      if (stand.test(msg.content))
+      if (stay.test(msg.content))
         currGame.activePlayer++;
 
       if (currGame.activePlayer >= currGame.players.length) {
@@ -95,7 +95,7 @@ async function messageHandler(msg) {
         break;
       }
 
-      await currGame.channel.send({ embed: embedMessage([currGame.dealer, currGame.players[currGame.activePlayer]], `${currGame.players[currGame.activePlayer].name}, hit or stand?`) });
+      await currGame.channel.send({ embed: embedMessage([currGame.dealer, currGame.players[currGame.activePlayer]], `${currGame.players[currGame.activePlayer].name}, Hit or Stay?`) });
       break;
     }
   }
