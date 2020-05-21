@@ -56,7 +56,7 @@ async function messageHandler(msg) {
         currGame.activePlayer = 0;
         await currGame.channel.send({ embed: embedMessage([currGame.dealer, ...currGame.players], 'Betting concluded. Cards dealt.') });
         await currGame.channel.send({ embed: embedMessage([currGame.dealer, currGame.players[currGame.activePlayer]], `${currGame.players[currGame.activePlayer].name}, Hit or Stand?`) });
-      }, 10000);
+      }, 15000);
       break;
 
     case 'betting':
@@ -105,10 +105,10 @@ async function messageHandler(msg) {
 }
 
 async function getPlayers(channel) {
-  const startingMsg = await channel.send({ embed: embedMessage([], 'A game of Blackjack is starting in 20 seconds!', 'Click the die to join.') });
+  const startingMsg = await channel.send({ embed: embedMessage([], 'A game of Blackjack is starting in 15 seconds!', 'Click the die to join.') });
   await startingMsg.react('🎲');
 
-  const diceEmoji = (await startingMsg.awaitReactions((r) => r.emoji.name === '🎲', { time: 20000 })).get('🎲');
+  const diceEmoji = (await startingMsg.awaitReactions((r) => r.emoji.name === '🎲', { time: 15000 })).get('🎲');
   if (!diceEmoji)
     return [];
 
@@ -138,13 +138,18 @@ async function finish(game) {
   for (const p of game.players) {
     p.score = score(p.cards);
 
-    if (p.score <= 21 && p.score > game.dealer.score) {
-      winners.push(p);
-      p.cash += p.bet ? p.bet * 1.5 : 5;
+    if (p.score > 21) {
+      p.bet = undefined;
+      continue;
     }
-
-    if (p.score === game.dealer.score)
+      
+    if (game.dealer.score > 21 || p.score > game.dealer.score) {
+      winners.push(p);
+      p.cash += p.bet ? p.bet *1.5 : 5;
+    } 
+    else if (p.score === game.dealer.score) {
       p.cash += p.bet;
+    }
 
     p.bet = undefined;
   }
